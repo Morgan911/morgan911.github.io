@@ -107,10 +107,12 @@ var ship = {
 		this.speed = this.speed < 0 ? 0: this.speed;
 	},
 	rotateRight: function(){
-		this.angle+=this.rotateSpeed;
+		if (this.speed > 0)
+			this.angle+=this.rotateSpeed;
 	},
 	rotateLeft: function(){
-		this.angle-=this.rotateSpeed;
+		if (this.speed > 0)
+			this.angle-=this.rotateSpeed;
 	},
 	update: function(){
 		this.speed -= this.friction;
@@ -127,7 +129,7 @@ frame();
 window.addEventListener('keydown', function(e){Key.keyDown(e);} ,false);
 window.addEventListener('keyup', function(e){Key.keyUp(e);} ,false);
 
-//TODO: finish keyboard ship control.
+//TODO: dont turn if speed is 0
 //TODO: create asteroids.
 //TODO: create collision detection.
 //TODO: Implement camera.
