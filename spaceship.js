@@ -54,12 +54,6 @@ function clearCanvas(){
 	ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);	
 }
 
-function drawBg(){
-    var ctx = CANVAS.getContext('2d')
-    ctx.fillStyle = '#550000';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-}
-
 var Key = {
 	LEFT: 37,
 	UP: 38,
@@ -206,12 +200,65 @@ function Bullet(ship){
 	};
 }
 
+
+// Space, camera
+
+
+	function Space(width, height){
+		this.width = width;
+		this.height = height;
+		this.texture = null;
+	}
+
+	Space.prototype.generate = function(){
+		var context = document.createElement('canvas').getContext('2d');
+		context.canvas.width = this.width;
+		context.canvas.height = this.height;
+
+		context.fillStyle = '#000000';
+		context.fillRect(0, 0, this.width, this.height);
+		context.fillStyle = '#ffffff';
+		for (var i = 0; i < this.width; i+=Math.floor((Math.random()*9)+1)) {
+			for (var j = 0; j < this.height; j += Math.floor((Math.random()*500)+35)) {
+				context.beginPath();
+				context.arc(i, j, Math.floor((Math.random()*2)+1), 0, 2 * Math.PI, false);
+				context.fill();	
+			}
+		}
+		this.texture = new Image();
+		this.texture.src = context.canvas.toDataURL('image/png');	
+		context = null;
+	}
+
+	Space.prototype.draw = function(context, x, y){
+		console.log(this.texture);
+		context.drawImage(
+			this.texture,
+			x,
+			y,
+			context.canvas.width,
+			context.canvas.height,
+			0,
+			0,
+			context.canvas.width,
+			context.canvas.height
+		);
+	}
+
+var space = new Space(CANVAS_WIDTH, CANVAS_HEIGHT);
+space.generate();
+function drawBg(){
+    var ctx = CANVAS.getContext('2d')
+    space.draw(ctx, 0,0);
+}
+
 createCanvas();
 frame();
 window.addEventListener('keydown', function(e){Key.keyDown(e);} ,false);
 window.addEventListener('keyup', function(e){Key.keyUp(e);} ,false);
 
-//TODO: create wearpon.
-//TODO: create asteroids.
-//TODO: create collision detection.
 //TODO: Implement camera.
+//TODO: finish wearpon.
+//TODO: create enemies.
+//TODO: create collision detection.
+//TODO: fix ship blinking.
