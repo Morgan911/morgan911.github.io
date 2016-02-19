@@ -2,8 +2,8 @@
 
 //First step: create canvas.
 
-SPACE_WIDTH = 5000;
-SPACE_HEIGHT = 5000;
+SPACE_WIDTH = 3000;
+SPACE_HEIGHT = 3000;
 CANVAS_WIDTH = 800;
 CANVAS_HEIGHT = 500;
 CANVAS = null;
@@ -131,13 +131,26 @@ function Ship(){
 			this.speed = 0;
 		this.x += Math.cos(Math.PI/180*this.angle)*this.speed;
 		this.y += Math.sin(Math.PI/180*this.angle)*this.speed;
+		
+		if (this.x+this.width/2 > SPACE_WIDTH){
+			this.x = SPACE_WIDTH - this.width/2;
+		}
+		if (this.x - this.width/2 < 0) {
+			this.x = this.width/2
+		}
+		if (this.y > SPACE_HEIGHT - this.width/2) {
+			this.y = SPACE_HEIGHT -this.width/2;
+		}
+		if (this.y < this.width/2 ) {
+			this.y = this.width/2;
+		}
 		for(var i = 0; i < this.fireParts.length; i++){
 			this.fireParts[i].update();
 		}
 		for (var i = 0; i < this.parts.length; i++) {
 			this.parts[i].update();
 		}
-	}
+	};
 }
 var ship = new Ship();
 
@@ -214,9 +227,11 @@ function Bullet(ship){
 
 		context.fillStyle = '#000000';
 		context.fillRect(0, 0, this.width, this.height);
-		context.fillStyle = '#ffffff';
+		
+		var colors = ['#ffffff', '#ff00ff', '#00ffff', '#0000ff'];
 		for (var i = 0; i < this.width; i+=Math.floor((Math.random()*9)+1)) {
 			for (var j = 0; j < this.height; j += Math.floor((Math.random()*500)+35)) {
+				context.fillStyle = colors[Math.floor(Math.random()*3)]
 				context.beginPath();
 				context.arc(i, j, Math.floor((Math.random()*2)+1), 0, 2 * Math.PI, false);
 				context.fill();	
@@ -260,12 +275,22 @@ function Bullet(ship){
 			return;
 		this.x = this.followed.x - this.canvasWidth/2;
 		this.y = this.followed.y - this.canvasHeight/2;
-	};
+		if (this.x + this.canvasWidth > this.spaceWidth) {
+			this.x = this.spaceWidth - this.canvasWidth;
+		}
+		if (this.x < 0) {
+			this.x = 0;
+		}
 
-function debugDraw(ctx, x, y){
-	ctx.fillStyle = 'green';
-	ctx.fillRect(x, y, 10, 10);
-} 
+		if (this.y > this.spaceHeight - this.canvasHeight) {
+			this.y = this.spaceHeight - this.canvasHeight;
+		}
+
+		if (this.y < 0) {
+			this.y = 0;
+		}
+	};
+ 
 var space = new Space(SPACE_WIDTH, SPACE_HEIGHT);
 space.generate();
 var camera = new Camera(0,0,CANVAS_WIDTH, CANVAS_HEIGHT, SPACE_WIDTH,SPACE_HEIGHT);
