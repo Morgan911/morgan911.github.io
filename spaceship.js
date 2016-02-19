@@ -1,63 +1,71 @@
 //Space shooter.
 
-//First step: create canvas.
+var Game = {
+	SPACE_WIDTH: 10000,
+	SPACE_HEIGHT: 10000,
+	CAMERA_WIDTH: 800,
+	CAMERA_HEIGHT: 500,
+	CANVAS: null,
+	isRunning: false
+};
 
-SPACE_WIDTH = 3000;
-SPACE_HEIGHT = 3000;
-CANVAS_WIDTH = 800;
-CANVAS_HEIGHT = 500;
-CANVAS = null;
+Game.createCanvas = function(){
+	this.CANVAS = document.createElement('canvas');
+	this.CANVAS.height = this.CAMERA_HEIGHT;
+	this.CANVAS.width = this.CAMERA_WIDTH;
+	document.getElementsByTagName('body')[0].appendChild(this.CANVAS);
+};
 
-function createCanvas(){
-	CANVAS = document.createElement('canvas');
-	CANVAS.height = CANVAS_HEIGHT;
-	CANVAS.width = CANVAS_WIDTH;
-	document.getElementsByTagName('body')[0].appendChild(CANVAS);	
-}
+Game.start = function(){
+	this.isRunning = true;
+	this.frame();
+};
 
-//Second step: create game loop.
+Game.pause = function(){
+	this.isRunning = false;
+};
 
-function frame(){
-	update();
-	render();
-	requestAnimationFrame(frame);
-} 
+Game.frame = function(){
+	if (this.isRunning) {
+		this.update();
+		this.draw();
+		requestAnimationFrame(this.frame);
+	}
+};
 
-//Third step: create game logic.
-
-function update(){
+Game.update = function(){
 	if (Key.isPressed(Key.LEFT)) {
-		ship.rotateLeft();
+		this.SHIP.rotateLeft();
 	}
 	if (Key.isPressed(Key.RIGHT)) {
-		ship.rotateRight();
+		this.SHIP.rotateRight();
 	}
 	if (Key.isPressed(Key.UP)) {
-		ship.accelerate();
+		this.SHIP.accelerate();
 	}
 	if (Key.isPressed(Key.DOWN)) {
-		ship.brake();
+		this.SHIP.brake();
 	}
 	if (Key.isPressed(Key.SPACE)){
-		ship.fire();
+		this.SHIP.fire();
 	}
-	ship.update();
-	camera.update();
-}
+	this.SHIP.update();
+	this.CAMERA.update();
+};
 
-function render(){
+Game.render = function(){
 	var ctx = CANVAS.getContext('2d');
-	clearCanvas(ctx);
-    space.draw(ctx, camera.x,camera.y);
-	ship.draw(ctx, camera.x, camera.y);
-}
+	this.clearCanvas(ctx);
+    this.SPACE.draw(ctx, this.CAMERA.x, this.CAMERA.y);
+	this.SHIP.draw(ctx, this.CAMERA.x, this.CAMERA.y);
+};	
 
-function clearCanvas(ctx){
+Game.clearCanvas = function(ctx){
 	ctx.fillStyle = '#ffffff';
-	ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);	
-}
+	ctx.fillRect(0, 0, CAMERA_WIDTH, this.CAMERA_HEIGHT);
+};
 
-var Key = {
+Game.KEY = {
 	LEFT: 37,
 	UP: 38,
 	RIGHT:39,
@@ -73,85 +81,113 @@ var Key = {
     keyUp: function(event){
     	delete this.pressed[event.keyCode];
     }
-}
+};
 
-function Ship(){
-	this.x=CANVAS_WIDTH/2;
-	this.y=CANVAS_HEIGHT/2;
-	this.angle=0;
-	this.width=200;
-	this.height=100;
-	this.speed=0;
-	this.maxSpeed=6;
-	this.acceleration=2;
-	this.friction=1/20;
-	this.rotateSpeed=3;
-	this.image='./ship.png';
-	this.fireParts = [new ShipFire(), new ShipFire()];
-	this.parts=[];
-	this.draw=function(ctx, x, y){		
-		var image = new Image();
-		image.src = this.image;
-    	for (var i = 0; i < this.parts.length; i++) {
-			this.parts[i].draw(ctx, x, y);
-		}
-    	ctx.save();
-    	ctx.translate(this.x - x, this.y - y);
-    	ctx.rotate(Math.PI/180*this.angle);
-		this.fireParts[0].draw(ctx, -this.width/2+5, -this.height/2+10);
-	 	this.fireParts[1].draw(ctx, -this.width/2+5, this.height/2-20);
-		
-    	ctx.drawImage(image, -this.width/2, -this.height/2, this.width, this.height);
-    	ctx.fillStyle = '#00FF00';
-    	ctx.fillRect(0, 0, 1,1);
-    	ctx.restore();
-    	
+(function(){
+	function Ship() {
+		this.x=CANVAS_WIDTH/2;
+		this.y=CANVAS_HEIGHT/2;
+		this.angle=0;
+		this.width=200;
+		this.height=100;
+		this.speed=0;
+		this.maxSpeed=20;
+		this.acceleration=0.5;
+		this.friction=1/20;
+		this.rotateSpeed=4;
+		this.image='./ship.png';
+		this.fireParts = [new ShipFire(), new ShipFire()];
+		this.parts=[];
+		this.draw=function(ctx, x, y){		
+			var image = new Image();
+			image.src = this.image;
+	    	for (var i = 0; i < this.parts.length; i++) {
+				this.parts[i].draw(ctx, x, y);
+			}
+	    	ctx.save();
+	    	ctx.translate(this.x - x, this.y - y);
+	    	ctx.rotate(Math.PI/180*this.angle);
+			this.fireParts[0].draw(ctx, -this.width/2+5, -this.height/2+10);
+		 	this.fireParts[1].draw(ctx, -this.width/2+5, this.height/2-20);
+			
+	    	ctx.drawImage(image, -this.width/2, -this.height/2, this.width, this.height);
+	    	ctx.fillStyle = '#00FF00';
+	    	ctx.fillRect(0, 0, 1,1);
+	    	ctx.restore();
+	    	
+		};
+		this.accelerate= function(){
+			this.speed += this.acceleration;
+			this.speed = this.speed > this.maxSpeed ? this.maxSpeed : this.speed;
+		};
+		this.brake= function(){
+			this.speed -= this.acceleration;
+			this.speed = this.speed < 0 ? 0: this.speed;
+		};
+		this.fire = function(){
+			var bullet = new Bullet(this);
+			this.parts[this.parts.length] = bullet;
+		};
+		this.rotateRight= function(){
+			this.angle+=this.rotateSpeed;
+		};
+		this.rotateLeft= function(){
+			this.angle-=this.rotateSpeed;
+		};
+		this.update= function(){
+			this.speed -= this.friction;
+			if (this.speed < 0)
+				this.speed = 0;
+			this.x += Math.cos(Math.PI/180*this.angle)*this.speed;
+			this.y += Math.sin(Math.PI/180*this.angle)*this.speed;
+			
+			if (this.x+this.width/2 > SPACE_WIDTH){
+				this.x = SPACE_WIDTH - this.width/2;
+			}
+			if (this.x - this.width/2 < 0) {
+				this.x = this.width/2
+			}
+			if (this.y > SPACE_HEIGHT - this.width/2) {
+				this.y = SPACE_HEIGHT -this.width/2;
+			}
+			if (this.y < this.width/2 ) {
+				this.y = this.width/2;
+			}
+			for(var i = 0; i < this.fireParts.length; i++){
+				this.fireParts[i].update();
+			}
+			for (var i = 0; i < this.parts.length; i++) {
+				this.parts[i].update();
+			}
+		};
+	}
+
+	Ship.prototype.draw = function(ctx){
+
 	};
-	this.accelerate= function(){
-		this.speed += this.acceleration;
-		this.speed = this.speed > this.maxSpeed ? this.maxSpeed : this.speed;
+	Ship.prototype.update = function(){
+
 	};
-	this.brake= function(){
-		this.speed -= this.acceleration;
-		this.speed = this.speed < 0 ? 0: this.speed;
+	Ship.prototype.accelerate  = function(){
+
 	};
-	this.fire = function(){
-		var bullet = new Bullet(this);
-		this.parts[this.parts.length] = bullet;
+	Ship.prototype.brake = function(){
+
 	};
-	this.rotateRight= function(){
-		this.angle+=this.rotateSpeed;
+	Ship.prototype.fire = function(){
+
 	};
-	this.rotateLeft= function(){
-		this.angle-=this.rotateSpeed;
+	Ship.prototype.rotateRight = function(){
+
 	};
-	this.update= function(){
-		this.speed -= this.friction;
-		if (this.speed < 0)
-			this.speed = 0;
-		this.x += Math.cos(Math.PI/180*this.angle)*this.speed;
-		this.y += Math.sin(Math.PI/180*this.angle)*this.speed;
-		
-		if (this.x+this.width/2 > SPACE_WIDTH){
-			this.x = SPACE_WIDTH - this.width/2;
-		}
-		if (this.x - this.width/2 < 0) {
-			this.x = this.width/2
-		}
-		if (this.y > SPACE_HEIGHT - this.width/2) {
-			this.y = SPACE_HEIGHT -this.width/2;
-		}
-		if (this.y < this.width/2 ) {
-			this.y = this.width/2;
-		}
-		for(var i = 0; i < this.fireParts.length; i++){
-			this.fireParts[i].update();
-		}
-		for (var i = 0; i < this.parts.length; i++) {
-			this.parts[i].update();
-		}
+	Ship.prototype.rotateLeft = function(){
+
 	};
-}
+	
+	Game.SHIP = Ship;
+})();
+
+
 var ship = new Ship();
 
 function ShipFire(){
@@ -301,8 +337,9 @@ frame();
 window.addEventListener('keydown', function(e){Key.keyDown(e);} ,false);
 window.addEventListener('keyup', function(e){Key.keyUp(e);} ,false);
 
-//TODO: Implement camera.
-//TODO: finish wearpon.
+//Add global class Game
+//Refactore ship, to be able to inherit it and make different typed of ships(e.g enemies)
 //TODO: create enemies.
 //TODO: create collision detection.
 //TODO: fix ship blinking.
+//TODO: finish wearpon.
