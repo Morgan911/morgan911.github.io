@@ -51,8 +51,7 @@ function render(){
 	var ctx = CANVAS.getContext('2d');
 	clearCanvas(ctx);
     space.draw(ctx, camera.x,camera.y);
-	ship.draw(ctx);
-	debugDraw(ctx, ship.x, ship.y);
+	ship.draw(ctx, camera.x, camera.y);
 }
 
 function clearCanvas(ctx){
@@ -82,8 +81,8 @@ function Ship(){
 	this.x=CANVAS_WIDTH/2;
 	this.y=CANVAS_HEIGHT/2;
 	this.angle=0;
-	this.width=CANVAS_WIDTH/5;
-	this.height=CANVAS_HEIGHT/5;
+	this.width=200;
+	this.height=100;
 	this.speed=0;
 	this.maxSpeed=6;
 	this.acceleration=2;
@@ -92,14 +91,14 @@ function Ship(){
 	this.image='./ship.png';
 	this.fireParts = [new ShipFire(), new ShipFire()];
 	this.parts=[];
-	this.draw=function(ctx){		
+	this.draw=function(ctx, x, y){		
 		var image = new Image();
 		image.src = this.image;
     	for (var i = 0; i < this.parts.length; i++) {
 			this.parts[i].draw(ctx);
 		}
     	ctx.save();
-    	ctx.translate(this.x, this.y);
+    	ctx.translate(this.x - x, this.y - y);
     	ctx.rotate(Math.PI/180*this.angle);
 		this.fireParts[0].draw(ctx, -this.width/2+5, -this.height/2+10);
 	 	this.fireParts[1].draw(ctx, -this.width/2+5, this.height/2-20);
@@ -237,8 +236,8 @@ function Bullet(ship){
 			y,
 			context.canvas.width,
 			context.canvas.height,
-			x,
-			y,
+			0,
+			0,
 			context.canvas.width,
 			context.canvas.height
 		);
@@ -261,8 +260,8 @@ function Bullet(ship){
 	Camera.prototype.update = function(){
 		if (this.followed == null)
 			return;
-		this.x = this.followed.x;
-		this.y = this.followed.y;
+		this.x = this.followed.x - this.canvasWidth/2;
+		this.y = this.followed.y - this.canvasHeight/2;
 	};
 
 function debugDraw(ctx, x, y){
