@@ -43,8 +43,6 @@ function update(){
 	}
 	ship.update();
 	camera.update();
-	console.log('SHIP:'+ship.x);
-	console.log('camera:'+camera.x);
 }
 
 function render(){
@@ -95,7 +93,7 @@ function Ship(){
 		var image = new Image();
 		image.src = this.image;
     	for (var i = 0; i < this.parts.length; i++) {
-			this.parts[i].draw(ctx);
+			this.parts[i].draw(ctx, x, y);
 		}
     	ctx.save();
     	ctx.translate(this.x - x, this.y - y);
@@ -188,10 +186,10 @@ function Bullet(ship){
 		this.x += Math.cos(Math.PI/180*this.angle)*this.speed;
 		this.y += Math.sin(Math.PI/180*this.angle)*this.speed; 
 	};
-	this.draw = function(ctx){
+	this.draw = function(ctx, xView, yView){
 		ctx.save();
-    	ctx.translate(this.x, this.y);
-    	ctx.rotate(Math.PI/180*this.angle);
+    	ctx.translate(this.x - xView, this.y - yView);
+    	ctx.rotate(Math.PI/180*ship.angle);
 		ctx.drawImage(
 			this.image,
 			10,10, 20,20,
