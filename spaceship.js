@@ -2,6 +2,8 @@
 
 //First step: create canvas.
 
+SPACE_WIDTH = 5000;
+SPACE_HEIGHT = 5000;
 CANVAS_WIDTH = 800;
 CANVAS_HEIGHT = 500;
 CANVAS = null;
@@ -40,6 +42,7 @@ function update(){
 		ship.fire();
 	}
 	ship.update();
+	camera.update();
 }
 
 function render(){
@@ -231,7 +234,6 @@ function Bullet(ship){
 	}
 
 	Space.prototype.draw = function(context, x, y){
-		console.log(this.texture);
 		context.drawImage(
 			this.texture,
 			x,
@@ -245,12 +247,33 @@ function Bullet(ship){
 		);
 	}
 
-var space = new Space(CANVAS_WIDTH, CANVAS_HEIGHT);
+	function Camera(x, y, canvasWidth, canvasHeight, spaceWidth, spaceHeight){
+		this.x = x;
+		this.y = y;
+		this.canvasWidth = canvasWidth;
+		this.canvasHeight = canvasHeight;
+		this.spaceWidth = spaceWidth;
+		this.spaceHeight = spaceHeight;
+		this.followed = null;
+	}
+
+	Camera.prototype.follow = function(character){
+		this.followed = character;
+	};
+
+	Camera.prototype.update = function(){
+		this.x = this.followed.x;
+		this.y = this.followed.y;
+	};
+
+var space = new Space(SPACE_WIDTH, SPACE_HEIGHT);
 space.generate();
 function drawBg(){
     var ctx = CANVAS.getContext('2d')
-    space.draw(ctx, 0,0);
+    space.draw(ctx, camera.x,camera.y);
 }
+var camera = new Camera(0,0,CANVAS_WIDTH, CANVAS_HEIGHT, SPACE_WIDTH,SPACE_HEIGHT);
+camera.follow(ship);
 
 createCanvas();
 frame();
