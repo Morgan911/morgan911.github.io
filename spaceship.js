@@ -1,8 +1,8 @@
 //Space shooter.
 
 var Game = {
-	SPACE_WIDTH: 10000,
-	SPACE_HEIGHT: 10000,
+	SPACE_WIDTH: 1000,
+	SPACE_HEIGHT: 1000,
 	CAMERA_WIDTH: 800,
 	CAMERA_HEIGHT: 500,
 	CANVAS: null,
@@ -28,41 +28,43 @@ Game.pause = function(){
 Game.frame = function(){
 	if (this.isRunning) {
 		this.update();
-		this.draw();
-		requestAnimationFrame(this.frame);
+		this.render();
+		requestAnimationFrame(function(){
+			Game.frame();
+		});
 	}
 };
 
 Game.update = function(){
-	if (Key.isPressed(Key.LEFT)) {
-		this.SHIP.rotateLeft();
+	if (Game.KEY.isPressed(Game.KEY.LEFT)) {
+		ship.rotateLeft();
 	}
-	if (Key.isPressed(Key.RIGHT)) {
-		this.SHIP.rotateRight();
+	if (Game.KEY.isPressed(Game.KEY.RIGHT)) {
+		ship.rotateRight();
 	}
-	if (Key.isPressed(Key.UP)) {
-		this.SHIP.accelerate();
+	if (Game.KEY.isPressed(Game.KEY.UP)) {
+		ship.accelerate();
 	}
-	if (Key.isPressed(Key.DOWN)) {
-		this.SHIP.brake();
+	if (Game.KEY.isPressed(Game.KEY.DOWN)) {
+		ship.brake();
 	}
-	if (Key.isPressed(Key.SPACE)){
-		this.SHIP.fire();
+	if (Game.KEY.isPressed(Game.KEY.SPACE)){
+		ship.fire();
 	}
-	this.SHIP.update();
-	this.CAMERA.update();
+	ship.update();
+	camera.update();
 };
 
 Game.render = function(){
-	var ctx = CANVAS.getContext('2d');
+	var ctx = Game.CANVAS.getContext('2d');
 	this.clearCanvas(ctx);
-    this.SPACE.draw(ctx, this.CAMERA.x, this.CAMERA.y);
-	this.SHIP.draw(ctx, this.CAMERA.x, this.CAMERA.y);
+    space.draw(ctx, camera.x, camera.y);
+	ship.draw(ctx, camera.x, camera.y);
 };	
 
 Game.clearCanvas = function(ctx){
 	ctx.fillStyle = '#ffffff';
-	ctx.fillRect(0, 0, CAMERA_WIDTH, this.CAMERA_HEIGHT);
+	ctx.fillRect(0, 0, this.CAMERA_WIDTH, this.CAMERA_HEIGHT);
 };
 
 Game.KEY = {
@@ -85,8 +87,8 @@ Game.KEY = {
 
 (function(){
 	function Ship() {
-		this.x=CANVAS_WIDTH/2;
-		this.y=CANVAS_HEIGHT/2;
+		this.x=Game.CAMERA_WIDTH/2;
+		this.y=Game.CAMERA_HEIGHT/2;
 		this.angle=0;
 		this.width=200;
 		this.height=100;
@@ -96,13 +98,16 @@ Game.KEY = {
 		this.friction=1/20;
 		this.rotateSpeed=4;
 		this.image='./ship.png';
-		this.fireParts = [new ShipFire(), new ShipFire()];
+		this.fireParts = [new Game.SHIPFIRE(), new Game.SHIPFIRE()];
 		this.parts=[];
-		this.draw=function(ctx, x, y){		
+	}
+
+	Ship.prototype.draw = function(ctx, x, y){
 			var image = new Image();
 			image.src = this.image;
 	    	for (var i = 0; i < this.parts.length; i++) {
 				this.parts[i].draw(ctx, x, y);
+
 			}
 	    	ctx.save();
 	    	ctx.translate(this.x - x, this.y - y);
@@ -114,41 +119,23 @@ Game.KEY = {
 	    	ctx.fillStyle = '#00FF00';
 	    	ctx.fillRect(0, 0, 1,1);
 	    	ctx.restore();
-	    	
-		};
-		this.accelerate= function(){
-			this.speed += this.acceleration;
-			this.speed = this.speed > this.maxSpeed ? this.maxSpeed : this.speed;
-		};
-		this.brake= function(){
-			this.speed -= this.acceleration;
-			this.speed = this.speed < 0 ? 0: this.speed;
-		};
-		this.fire = function(){
-			var bullet = new Bullet(this);
-			this.parts[this.parts.length] = bullet;
-		};
-		this.rotateRight= function(){
-			this.angle+=this.rotateSpeed;
-		};
-		this.rotateLeft= function(){
-			this.angle-=this.rotateSpeed;
-		};
-		this.update= function(){
-			this.speed -= this.friction;
+
+	};
+	Ship.prototype.update = function(){
+		this.speed -= this.friction;
 			if (this.speed < 0)
 				this.speed = 0;
 			this.x += Math.cos(Math.PI/180*this.angle)*this.speed;
 			this.y += Math.sin(Math.PI/180*this.angle)*this.speed;
 			
-			if (this.x+this.width/2 > SPACE_WIDTH){
-				this.x = SPACE_WIDTH - this.width/2;
+			if (this.x+this.width/2 > Game.SPACE_WIDTH){
+				this.x = Game.SPACE_WIDTH - this.width/2;
 			}
 			if (this.x - this.width/2 < 0) {
 				this.x = this.width/2
 			}
-			if (this.y > SPACE_HEIGHT - this.width/2) {
-				this.y = SPACE_HEIGHT -this.width/2;
+			if (this.y > Game.SPACE_HEIGHT - this.width/2) {
+				this.y = Game.SPACE_HEIGHT -this.width/2;
 			}
 			if (this.y < this.width/2 ) {
 				this.y = this.width/2;
@@ -159,58 +146,55 @@ Game.KEY = {
 			for (var i = 0; i < this.parts.length; i++) {
 				this.parts[i].update();
 			}
-		};
-	}
-
-	Ship.prototype.draw = function(ctx){
-
-	};
-	Ship.prototype.update = function(){
-
 	};
 	Ship.prototype.accelerate  = function(){
-
+		this.speed += this.acceleration;
+		this.speed = this.speed > this.maxSpeed ? this.maxSpeed : this.speed;
 	};
 	Ship.prototype.brake = function(){
-
+		this.speed -= this.acceleration;
+		this.speed = this.speed < 0 ? 0: this.speed;
 	};
 	Ship.prototype.fire = function(){
-
+		var bullet = new Game.BULLET(this);
+		this.parts[this.parts.length] = bullet;
 	};
 	Ship.prototype.rotateRight = function(){
-
+		this.angle+=this.rotateSpeed;
 	};
 	Ship.prototype.rotateLeft = function(){
-
+		this.angle-=this.rotateSpeed;
 	};
 	
 	Game.SHIP = Ship;
 })();
 
 
-var ship = new Ship();
 
-function ShipFire(){
-	this.tickCount = 0;
-	this.tickCount=0;
-    this.frameIndex=[0,0];	
-    this.ticksPerFrame=4;
-    this.framesCount=[5,4];
-    this.ship = ship;
-    this.image='./fire.png';
-    this.update = function(){
-        if (this.tickCount++ > this.ticksPerFrame){	
-    		if (++this.frameIndex[1] > this.framesCount[1] - 1) {
+(function(){
+	function ShipFire(){
+		this.tickCount = 0;
+		this.tickCount=0;
+    		this.frameIndex=[0,0];	
+    		this.ticksPerFrame=4;
+		this.framesCount=[5,4];
+    		this.ship = ship;
+    		this.image='./fire.png';
+	}
+	ShipFire.prototype.update = function(){
+		if (this.tickCount++ > this.ticksPerFrame){	
+    			if (++this.frameIndex[1] > this.framesCount[1] - 1) {
     			this.frameIndex[1] = 0;
     			if (++this.frameIndex[0] > this.framesCount[0] - 1) {
     				this.frameIndex[0] = 0;
     			}
     		}
     		this.tickCount = 0;
-    	}
-    };
-    this.draw = function(ctx, x, y){
-    	var image = new Image();
+    	}	
+	}
+
+	ShipFire.prototype.draw = function(ctx, x, y){
+		var image = new Image();
     	image.src = this.image;	
     		ctx.drawImage(
     			image,
@@ -220,22 +204,27 @@ function ShipFire(){
     			x, y,
     			10, 10   				
     		);	
-    }
-}
+	}
+Game.SHIPFIRE = ShipFire;
+})();
 
-function Bullet(ship){
-	this.speed = 10;
-	this.image = new Image();
-	this.image.src = './bullet.png';
-	this.ship = ship;
-	this.angle = ship.angle;
-	this.x = ship.x;
-	this.y = ship.y;
-	this.update = function(){;
+(function(){
+	function Bullet(ship){
+		this.speed = 10;
+		this.image = new Image();
+		this.image.src = './bullet.png';
+		this.ship = ship;
+		this.angle = ship.angle;
+		this.x = ship.x;
+		this.y = ship.y;
+	}
+	Bullet.prototype.update = function(){
 		this.x += Math.cos(Math.PI/180*this.angle)*this.speed;
 		this.y += Math.sin(Math.PI/180*this.angle)*this.speed; 
-	};
-	this.draw = function(ctx, xView, yView){
+
+	}
+	Bullet.prototype.draw = function(ctx, xView, yView){
+		
 		ctx.save();
     	ctx.translate(this.x - xView, this.y - yView);
     	ctx.rotate(Math.PI/180*ship.angle);
@@ -247,9 +236,14 @@ function Bullet(ship){
 			10,10
 		);
 		ctx.restore();
-	};
-}
 
+	}
+
+Game.BULLET = Bullet;
+}
+)();
+
+(function(){
 	function Space(width, height){
 		this.width = width;
 		this.height = height;
@@ -291,7 +285,11 @@ function Bullet(ship){
 			context.canvas.height
 		);
 	}
+	Game.SPACE = Space;
 
+})();
+
+(function(){
 	function Camera(x, y, canvasWidth, canvasHeight, spaceWidth, spaceHeight){
 		this.x = x;
 		this.y = y;
@@ -326,16 +324,20 @@ function Bullet(ship){
 			this.y = 0;
 		}
 	};
+	Game.CAMERA = Camera;
+})();
+
  
-var space = new Space(SPACE_WIDTH, SPACE_HEIGHT);
+var ship = new Game.SHIP();
+var space = new Game.SPACE(Game.SPACE_WIDTH, Game.SPACE_HEIGHT);
 space.generate();
-var camera = new Camera(0,0,CANVAS_WIDTH, CANVAS_HEIGHT, SPACE_WIDTH,SPACE_HEIGHT);
+var camera = new Game.CAMERA(0,0,Game.CAMERA_WIDTH, Game.CAMERA_HEIGHT, Game.SPACE_WIDTH,Game.SPACE_HEIGHT);
 camera.follow(ship);
 
-createCanvas();
-frame();
-window.addEventListener('keydown', function(e){Key.keyDown(e);} ,false);
-window.addEventListener('keyup', function(e){Key.keyUp(e);} ,false);
+Game.createCanvas();
+Game.start();
+window.addEventListener('keydown', function(e){Game.KEY.keyDown(e);} ,false);
+window.addEventListener('keyup', function(e){Game.KEY.keyUp(e);} ,false);
 
 //Add global class Game
 //Refactore ship, to be able to inherit it and make different typed of ships(e.g enemies)
