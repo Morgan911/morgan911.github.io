@@ -6,7 +6,8 @@ var Game = {
 	CAMERA_WIDTH: 800,
 	CAMERA_HEIGHT: 500,
 	CANVAS: null,
-	isRunning: false
+	isRunning: false,
+	ticks: 0
 };
 
 Game.createCanvas = function(){
@@ -23,6 +24,10 @@ Game.start = function(){
 
 Game.pause = function(){
 	this.isRunning = false;
+};
+
+Game.tick = function(){
+	this.ticks++;
 };
 
 Game.frame = function(){
@@ -53,6 +58,7 @@ Game.update = function(){
 	}
 	ship.update();
 	camera.update();
+	this.tick();
 };
 
 Game.render = function(){
@@ -93,7 +99,9 @@ Game.KEY = {
 		this.width=200;
 		this.height=100;
 		this.speed=0;
-		this.maxSpeed=20;
+		this.cooldown = 10;
+		this.cooldownStart = 0;
+		this.maxSpeed=6;
 		this.acceleration=0.5;
 		this.friction=1/20;
 		this.rotateSpeed=4;
@@ -156,8 +164,11 @@ Game.KEY = {
 		this.speed = this.speed < 0 ? 0: this.speed;
 	};
 	Ship.prototype.fire = function(){
-		var bullet = new Game.BULLET(this);
-		this.parts[this.parts.length] = bullet;
+		if (this.cooldown + this.cooldownStart < Game.ticks) {
+			var bullet = new Game.BULLET(this);
+			this.parts[this.parts.length] = bullet;
+			this.cooldownStart = Game.ticks;
+		}
 	};
 	Ship.prototype.rotateRight = function(){
 		this.angle+=this.rotateSpeed;
@@ -173,24 +184,21 @@ Game.KEY = {
 
 (function(){
 	function ShipFire(){
-		this.tickCount = 0;
-		this.tickCount=0;
     		this.frameIndex=[0,0];	
-    		this.ticksPerFrame=4;
+    		this.ticksPerFrame=8;
 		this.framesCount=[5,4];
     		this.ship = ship;
     		this.image='./fire.png';
 	}
 	ShipFire.prototype.update = function(){
-		if (this.tickCount++ > this.ticksPerFrame){	
+		if (Game.ticks % this.ticksPerFrame == 0){	
     			if (++this.frameIndex[1] > this.framesCount[1] - 1) {
-    			this.frameIndex[1] = 0;
-    			if (++this.frameIndex[0] > this.framesCount[0] - 1) {
-    				this.frameIndex[0] = 0;
+    				this.frameIndex[1] = 0;
+    				if (++this.frameIndex[0] > this.framesCount[0] - 1) {
+    					this.frameIndex[0] = 0;
+    				}
     			}
-    		}
-    		this.tickCount = 0;
-    	}	
+    		}	
 	}
 
 	ShipFire.prototype.draw = function(ctx, x, y){
